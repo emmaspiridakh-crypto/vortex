@@ -5,32 +5,23 @@ import os
 import threading
 import asyncio
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from flask import Flask
 from datetime import datetime
 import config
 
-# ─── Fake HTTP server για Render ──────────────────────────────────────────────
-# Το Render χρειάζεται έναν HTTP server αλλιώς κλείνει το service
+app = Flask('')
 
-class HealthHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.send_header('Content-Type', 'text/plain')
-        self.end_headers()
-        self.wfile.write(b'OK - Bot is alive!')
+@app.route('/')
+def home():
+    return "OK"
 
-    def log_message(self, format, *args):
-        pass  # Απόκρυψη HTTP logs
+def run():
+    app.run(host='0.0.0.0', port=10000)
 
-def run_http_server():
-    port = int(os.environ.get('PORT', 8080))
-    server = HTTPServer(('0.0.0.0', port), HealthHandler)
-    print(f'🌐 HTTP server listening on port {port}')
-    server.serve_forever()
+def keep_alive():
+    t = Thread(target=run)
+    t.start()
 
-# Ξεκίνα τον fake HTTP server σε background thread
-threading.Thread(target=run_http_server, daemon=True).start()
-
-# ─── Bot Setup ────────────────────────────────────────────────────────────────
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -361,5 +352,6 @@ async def logs_cmd(ctx):
 
 
 # ─── Run ──────────────────────────────────────────────────────────────────────
-
+if __name__=="__main__":
+    keep_alive()
 bot.run(config.TOKEN)
